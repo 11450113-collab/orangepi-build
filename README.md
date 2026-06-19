@@ -20,4 +20,38 @@ Soc | Boards |
 - English link：http://www.orangepi.org
 
 ## Supported Host Systems
-- Ubuntu 22.04
+- Ubuntu 22.04 / 24.04 (x86_64)
+
+## Quick start
+
+1. Install dependencies
+```bash
+sudo apt update
+sudo apt install -y git binfmt-support qemu-user-static
+```
+
+2. Clone and run
+```bash
+git clone https://github.com/orangepi-xunlong/orangepi-build.git
+cd orangepi-build
+```
+
+3. Create your board config in `userpatches/config-<name>.conf`. Example for **Orange Pi 4 Pro**:
+```ini
+BOARD="orangepi4pro"
+BRANCH="current"
+RELEASE="jammy"
+BUILD_OPT="image"
+DESKTOP=""
+```
+
+4. Build
+```bash
+sudo ./build.sh <name>
+```
+
+5. Flash
+```bash
+sudo dd if=output/images/orangepi4pro-current-jammy-*.img of=/dev/sdX bs=4M status=progress conv=fsync
+sync
+```
