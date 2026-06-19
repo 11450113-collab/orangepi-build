@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #mirror_url=http://mirrors.ustc.edu.cn
-mirror_url=https://repo.huaweicloud.com
+mirror_url=https://packages.ros.org
 
 if [[ -n $1 && $1 =~ ros1|ros2 ]]; then
 	version=$1
@@ -66,6 +66,14 @@ if [[ $version == "ros2" && $release =~ jammy ]]; then
 
 	source /opt/ros/humble/setup.bash
 	ros2 -h
+
+	exit
+
+fi
+
+if [[ $version == "ros2" && $release =~ plucky ]]; then
+
+	source /usr/bin/install_ros_rolling.sh "rolling" "$mirror_url"
 
 	exit
 

@@ -163,7 +163,7 @@ create_rootfs_cache()
 
 		cd $SDCARD # this will prevent error sh: 0: getcwd() failed
 
-		bootstrap bullseye "$SDCARD" "https://mirrors.ustc.edu.cn/debian/"
+		bootstrap bullseye "$SDCARD" "https://deb.debian.org/debian/"
 
 		mount_chroot "$SDCARD"
 
@@ -465,7 +465,7 @@ prepare_partitions() {
 	# parttype[nfs] is empty
 
 	# metadata_csum and 64bit may need to be disabled explicitly when migrating to newer supported host OS releases
-	if [[ $HOSTRELEASE =~ buster|bullseye|bookworm|bionic|focal|jammy|noble|kinetic|sid ]]; then
+	if [[ $HOSTRELEASE =~ buster|bullseye|bookworm|bionic|focal|jammy|noble|plucky|kinetic|sid ]]; then
 		mkopts[ext4]="-q -m 2 -O ^64bit,^metadata_csum"
 	fi
 	# mkopts[fat] is empty

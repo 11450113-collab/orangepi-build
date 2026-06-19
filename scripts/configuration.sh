@@ -12,7 +12,7 @@
 [[ -z $OPI_USERNAME ]] && OPI_USERNAME="orangepi" 
 [[ -z $OPI_PWD ]] && OPI_PWD="orangepi" 
 [[ -z $MAINTAINER ]] && MAINTAINER="Orange Pi" # deb signature
-[[ -z $MAINTAINERMAIL ]] && MAINTAINERMAIL="leeboby@aliyun.com" # deb signature
+[[ -z $MAINTAINERMAIL ]] && MAINTAINERMAIL="support@orangepi.org" # deb signature
 [[ -z $DEB_COMPRESS ]] && DEB_COMPRESS="xz" # compress .debs with XZ by default. Use 'none' for faster/larger builds
 TZDATA=$(cat /etc/timezone) # Timezone for target is taken from host or defined here.
 USEALLCORES=yes # Use all CPU cores for compiling
@@ -20,7 +20,7 @@ HOSTRELEASE=$(cat /etc/os-release | grep VERSION_CODENAME | cut -d"=" -f2)
 [[ -z $HOSTRELEASE ]] && HOSTRELEASE=$(cut -d'/' -f1 /etc/debian_version)
 [[ -z $EXIT_PATCHING_ERROR ]] && EXIT_PATCHING_ERROR="" # exit patching if failed
 [[ -z $HOST ]] && HOST="$BOARD" # set hostname to the board
-[[ -z $CHINA_DOWNLOAD_MIRROR ]] && CHINA_DOWNLOAD_MIRROR=huawei
+
 cd "${SRC}" || exit
 [[ -z "${ROOTFSCACHE_VERSION}" ]] && ROOTFSCACHE_VERSION=11
 [[ -z "${CHROOT_CACHE_VERSION}" ]] && CHROOT_CACHE_VERSION=7
@@ -59,13 +59,15 @@ fi
 # then here is yet another mirror related option.
 # Respecting user's override in case a mirror is unreachable.
 case $REGIONAL_MIRROR in
-	china)
-		[[ -z $USE_MAINLINE_GOOGLE_MIRROR ]] && [[ -z $MAINLINE_MIRROR ]] && MAINLINE_MIRROR=tuna
-		[[ -z $USE_GITHUB_UBOOT_MIRROR ]] && [[ -z $UBOOT_MIRROR ]] && UBOOT_MIRROR=gitee
-		[[ -z $GITHUB_MIRROR ]] && GITHUB_MIRROR=gitclone
-		[[ -z $DOWNLOAD_MIRROR ]] && DOWNLOAD_MIRROR=china
+	asia)
+		[[ -z $USE_MAINLINE_GOOGLE_MIRROR ]] && [[ -z $MAINLINE_MIRROR ]] && MAINLINE_MIRROR=google
+		[[ -z $USE_GITHUB_UBOOT_MIRROR ]] && [[ -z $UBOOT_MIRROR ]] && UBOOT_MIRROR=github
+		[[ -z $GITHUB_MIRROR ]] && GITHUB_MIRROR=github
 		;;
 	*)
+		[[ -z $USE_MAINLINE_GOOGLE_MIRROR ]] && [[ -z $MAINLINE_MIRROR ]] && MAINLINE_MIRROR=google
+		[[ -z $USE_GITHUB_UBOOT_MIRROR ]] && [[ -z $UBOOT_MIRROR ]] && UBOOT_MIRROR=github
+		[[ -z $GITHUB_MIRROR ]] && GITHUB_MIRROR=github
 		;;
 esac
 
@@ -76,14 +78,6 @@ case $MAINLINE_MIRROR in
 	google)
 		MAINLINE_KERNEL_SOURCE='https://kernel.googlesource.com/pub/scm/linux/kernel/git/stable/linux-stable'
 		MAINLINE_FIRMWARE_SOURCE='https://kernel.googlesource.com/pub/scm/linux/kernel/git/firmware/linux-firmware.git'
-		;;
-	tuna)
-		MAINLINE_KERNEL_SOURCE='https://mirrors.tuna.tsinghua.edu.cn/git/linux-stable.git'
-		MAINLINE_FIRMWARE_SOURCE='https://mirrors.tuna.tsinghua.edu.cn/git/linux-firmware.git'
-		;;
-	bfsu)
-		MAINLINE_KERNEL_SOURCE='https://mirrors.bfsu.edu.cn/git/linux-stable.git'
-		MAINLINE_FIRMWARE_SOURCE='https://mirrors.bfsu.edu.cn/git/linux-firmware.git'
 		;;
 	*)
 		MAINLINE_KERNEL_SOURCE='git://git.kernel.org/pub/scm/linux/kernel/git/stable/linux-stable.git'
@@ -96,12 +90,6 @@ MAINLINE_KERNEL_DIR="$SRC/kernel"
 [[ $USE_GITHUB_UBOOT_MIRROR == yes ]] && UBOOT_MIRROR=github
 
 case $UBOOT_MIRROR in
-	gitee)
-		MAINLINE_UBOOT_SOURCE='https://github.com/orangepi-xunlong/u-boot-orangepi.git'
-		;;
-	github)
-		MAINLINE_UBOOT_SOURCE='https://github.com/orangepi-xunlong/u-boot-orangepi.git'
-		;;
 	*)
 		MAINLINE_UBOOT_SOURCE='https://source.denx.de/u-boot/u-boot.git'
 		;;
@@ -110,12 +98,6 @@ esac
 MAINLINE_UBOOT_DIR="$SRC/u-boot"
 
 case $GITHUB_MIRROR in
-	fastgit)
-		GITHUB_SOURCE='https://hub.fastgit.xyz'
-		;;
-	gitclone)
-		GITHUB_SOURCE='https://gitclone.com/github.com'
-		;;
 	*)
 		GITHUB_SOURCE='https://github.com'
 		;;
@@ -580,40 +562,8 @@ unset LOG_OUTPUT_FILE
 
 DEBIAN_MIRROR='deb.debian.org/debian'
 DEBIAN_SECURTY='security.debian.org/'
-UBUNTU_MIRROR='ports.ubuntu.com/'
+UBUNTU_MIRROR='archive.ubuntu.com/ubuntu'
 RASPI_MIRROR='archive.raspberrypi.org/debian/'
-
-if [[ $DOWNLOAD_MIRROR == "china" ]] ; then
-
-	if [[ ${CHINA_DOWNLOAD_MIRROR} == tsinghua ]]; then
-		DEBIAN_MIRROR='mirrors.tuna.tsinghua.edu.cn/debian'
-		DEBIAN_SECURTY='mirrors.tuna.tsinghua.edu.cn/debian-security'
-		UBUNTU_MIRROR='mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/'
-	fi
-
-	if [[ ${CHINA_DOWNLOAD_MIRROR} == huawei ]]; then
-		DEBIAN_MIRROR='repo.huaweicloud.com/debian'
-		DEBIAN_SECURTY='repo.huaweicloud.com/debian-security'
-		UBUNTU_MIRROR='repo.huaweicloud.com/ubuntu-ports/'
-	fi
-
-	RASPI_MIRROR='mirrors.ustc.edu.cn/archive.raspberrypi.org/debian/'
-
-fi
-
-if [[ $DOWNLOAD_MIRROR == "bfsu" ]] ; then
-	DEBIAN_MIRROR='mirrors.bfsu.edu.cn/debian'
-	DEBIAN_SECURTY='mirrors.bfsu.edu.cn/debian-security'
-	UBUNTU_MIRROR='mirrors.bfsu.edu.cn/ubuntu-ports/'
-fi
-
-if [[ "${ARCH}" == "amd64" ]]; then
-	UBUNTU_MIRROR='archive.ubuntu.com/ubuntu' # ports are only for non-amd64, of course.
-
-		if [[ -n ${CUSTOM_UBUNTU_MIRROR} ]]; then # ubuntu redirector doesn't work well on amd64
-			UBUNTU_MIRROR="${CUSTOM_UBUNTU_MIRROR}"
-		fi
-fi
 
 # don't use mirrors that throws garbage on 404
 if [[ -z ${ARMBIAN_MIRROR} ]]; then

@@ -607,11 +607,7 @@ compile_firmware()
 	plugin_dir="orangepi-firmware${FULL}"
 	mkdir -p "${firmwaretempdir}/${plugin_dir}/lib/firmware"
 
-	if [[ $GITEE_SERVER == yes ]]; then
-		[[ $IGNORE_UPDATES != yes ]] && fetch_from_repo "https://gitee.com/orangepi-xunlong/firmware" "${EXTER}/cache/sources/orangepi-firmware-git" "branch:master"
-	else
-		[[ $IGNORE_UPDATES != yes ]] && fetch_from_repo "https://github.com/orangepi-xunlong/firmware" "${EXTER}/cache/sources/orangepi-firmware-git" "branch:master"
-	fi
+	[[ $IGNORE_UPDATES != yes ]] && fetch_from_repo "https://github.com/orangepi-xunlong/firmware" "${EXTER}/cache/sources/orangepi-firmware-git" "branch:master"
 
 	if [[ -n $FULL ]]; then
 		[[ $IGNORE_UPDATES != yes ]] && fetch_from_repo "$MAINLINE_FIRMWARE_SOURCE" "${EXTER}/cache/sources/linux-firmware-git" "branch:master"
@@ -665,13 +661,8 @@ compile_orangepi-zsh()
 	orangepi_zsh_dir=orangepi-zsh_${REVISION}_all
 	display_alert "Building deb" "orangepi-zsh" "info"
 
-	if [[ $GITEE_SERVER == yes ]]; then
-		[[ $IGNORE_UPDATES != yes ]] && fetch_from_repo "https://gitee.com/orangepi-xunlong/oh-my-zsh" "${EXTER}/cache/sources/oh-my-zsh" "branch:master"
-		[[ $IGNORE_UPDATES != yes ]] && fetch_from_repo "https://gitee.com/orangepi-xunlong/evalcache" "${EXTER}/cache/sources/evalcache" "branch:master"
-	else
-		[[ $IGNORE_UPDATES != yes ]] && fetch_from_repo "https://github.com/robbyrussell/oh-my-zsh" "${EXTER}/cache/sources/oh-my-zsh" "branch:master"
-		[[ $IGNORE_UPDATES != yes ]] && fetch_from_repo "https://github.com/mroth/evalcache" "${EXTER}/cache/sources/evalcache" "branch:master"
-	fi
+	[[ $IGNORE_UPDATES != yes ]] && fetch_from_repo "https://github.com/robbyrussell/oh-my-zsh" "${EXTER}/cache/sources/orangepi-oh-my-zsh" "branch:master"
+	[[ $IGNORE_UPDATES != yes ]] && fetch_from_repo "https://github.com/mroth/evalcache" "${EXTER}/cache/sources/orangepi-evalcache" "branch:master"
 
 	mkdir -p "${tmp_dir}/${orangepi_zsh_dir}"/{DEBIAN,etc/skel/,etc/oh-my-zsh/,/etc/skel/.oh-my-zsh/cache}
 

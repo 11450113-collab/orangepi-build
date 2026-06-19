@@ -40,6 +40,7 @@ create_chroot()
 	components['stretch']='main,contrib'
 	apt_mirror['jammy']="$UBUNTU_MIRROR"
 	apt_mirror['noble']="$UBUNTU_MIRROR"
+	apt_mirror['plucky']="$UBUNTU_MIRROR"
 	components['buster']='main,contrib'
 	components['bullseye']='main,contrib'
 	components['bookworm']='main,contrib'
@@ -51,12 +52,13 @@ create_chroot()
 	components['impish']='main,universe,multiverse'
 	components['jammy']='main,universe,multiverse'
 	components['noble']='main,universe,multiverse'
+	components['plucky']='main,universe,multiverse'
 	display_alert "Creating build chroot" "$release/$arch" "info"
 	local includes="ccache,locales,git,ca-certificates,devscripts,libfile-fcntllock-perl,debhelper,rsync,python3,distcc,apt-utils"
 
 	# perhaps a temporally workaround
 	case $release in
-		buster|bullseye|focal|hirsute|sid|bookworm)
+		buster|bullseye|focal|hirsute|sid|bookworm|plucky)
 			includes=${includes}",perl-openssl-defaults,libnet-ssleay-perl"
 		;;
 	esac
@@ -116,7 +118,7 @@ create_chroot()
 	date +%s >"$target_dir/root/.update-timestamp"
 
 	case $release in
-	bullseye|focal|hirsute|sid|bookworm)
+	bullseye|focal|hirsute|sid|bookworm|plucky)
 		chroot "${target_dir}" /bin/bash -c "apt-get install python-is-python3"
 		;;
 	esac
@@ -143,6 +145,7 @@ chroot_prepare_distccd()
 	gcc_version['focal']='9.2'
 	gcc_version['jammy']='10.2'
 	gcc_version['noble']='13.2'
+	gcc_version['plucky']='14.2'
 	gcc_version['hirsute']='10.2'
 	gcc_version['sid']='10.2'
 	gcc_type['armhf']='arm-linux-gnueabihf-'
@@ -179,7 +182,7 @@ chroot_build_packages()
 		target_arch="${ARCH}"
 	else
 		# only make packages for recent releases. There are no changes on older
-		target_release="stretch bionic buster bullseye bookworm focal hirsute jammy noble sid"
+		target_release="stretch bionic buster bullseye bookworm focal hirsute jammy noble plucky sid"
 		target_arch="armhf arm64"
 	fi
 

@@ -291,13 +291,7 @@ create_sources_list()
 	esac
 
 	# stage: add armbian repository and install key
-	#if [[ $DOWNLOAD_MIRROR == "china" ]]; then
-	#	echo "deb https://mirrors.tuna.tsinghua.edu.cn/armbian $RELEASE main ${RELEASE}-utils ${RELEASE}-desktop" > "${SDCARD}"/etc/apt/sources.list.d/armbian.list
-	#elif [[ $DOWNLOAD_MIRROR == "bfsu" ]]; then
-	#    echo "deb http://mirrors.bfsu.edu.cn/armbian $RELEASE main ${RELEASE}-utils ${RELEASE}-desktop" > "${SDCARD}"/etc/apt/sources.list.d/armbian.list
-	#else
-	#	echo "deb http://"$([[ $BETA == yes ]] && echo "beta" || echo "apt" )".armbian.com $RELEASE main ${RELEASE}-utils ${RELEASE}-desktop" > "${SDCARD}"/etc/apt/sources.list.d/armbian.list
-	#fi
+
 
 	# replace local package server if defined. Suitable for development
 	#[[ -n $LOCAL_MIRROR ]] && echo "deb http://$LOCAL_MIRROR $RELEASE main ${RELEASE}-utils ${RELEASE}-desktop" > "${SDCARD}"/etc/apt/sources.list.d/armbian.list
@@ -888,13 +882,13 @@ function distro_menu ()
 				[[ -z "${DISTRIB_TYPE_LEGACY}" ]] && DISTRIB_TYPE="buster bionic focal"
 			elif [[ "${BRANCH}" == "current" ]]; then
 				DISTRIB_TYPE="${DISTRIB_TYPE_CURRENT}"
-				[[ -z "${DISTRIB_TYPE_CURRENT}" ]] && DISTRIB_TYPE="bullseye bookworm focal jammy noble"
+				[[ -z "${DISTRIB_TYPE_CURRENT}" ]] && DISTRIB_TYPE="bullseye bookworm focal jammy noble plucky"
 			elif [[ "${BRANCH}" == "next" ]]; then
 				if [[ -n "${DISTRIB_TYPE_NEXT}" ]]; then
 					DISTRIB_TYPE="${DISTRIB_TYPE_NEXT}"
 				else
 					DISTRIB_TYPE="${DISTRIB_TYPE_CURRENT}"
-					[[ -z "${DISTRIB_TYPE_CURRENT}" ]] && DISTRIB_TYPE="bullseye bookworm focal jammy noble"
+					[[ -z "${DISTRIB_TYPE_CURRENT}" ]] && DISTRIB_TYPE="bullseye bookworm focal jammy noble plucky"
 				fi
 			fi
 
@@ -955,7 +949,7 @@ addtorepo()
 # parameter "delete" remove incoming directory if publishing is succesful
 # function: cycle trough distributions
 
-	local distributions=("stretch" "bionic" "buster" "bullseye" "bookworm" "focal" "hirsute" "jammy" "noble" "sid")
+	local distributions=("stretch" "bionic" "buster" "bullseye" "bookworm" "focal" "hirsute" "jammy" "noble" "plucky" "sid")
 	#local distributions=($(grep -rw config/distributions/*/ -e 'supported' | cut -d"/" -f3))
 	local errors=0
 
@@ -1085,7 +1079,7 @@ repo-manipulate()
 # "update" search for new files in output/debs* to add them to repository
 # "purge" leave only last 5 versions
 
-	local DISTROS=("stretch" "bionic" "buster" "bullseye" "bookworm" "focal" "hirsute" "jammy" "noble" "sid")
+	local DISTROS=("stretch" "bionic" "buster" "bullseye" "bookworm" "focal" "hirsute" "jammy" "noble" "plucky" "sid")
 	#local DISTROS=($(grep -rw config/distributions/*/ -e 'supported' | cut -d"/" -f3))
 
 	case $@ in
@@ -1460,7 +1454,7 @@ prepare_host()
   fi
 
 	# Add support for Ubuntu 20.04, 21.04 and Mint 20.x
-	if [[ $HOSTRELEASE =~ ^(focal|hirsute|jammy|noble|noble|ulyana|ulyssa|bullseye|bookworm|uma)$ ]]; then
+	if [[ $HOSTRELEASE =~ ^(focal|hirsute|jammy|noble|ulyana|ulyssa|bullseye|bookworm|uma|plucky)$ ]]; then
 		hostdeps+=" python2 python3"
 		ln -fs /usr/bin/python2.7 /usr/bin/python2
 		ln -fs /usr/bin/python2.7 /usr/bin/python
@@ -1475,7 +1469,7 @@ prepare_host()
 	#
 	# NO_HOST_RELEASE_CHECK overrides the check for a supported host system
 	# Disable host OS check at your own risk. Any issues reported with unsupported releases will be closed without discussion
-	if [[ -z $HOSTRELEASE || "focal jammy noble" != *"$HOSTRELEASE"* ]]; then
+	if [[ -z $HOSTRELEASE || "focal jammy noble plucky" != *"$HOSTRELEASE"* ]]; then
 		if [[ $NO_HOST_RELEASE_CHECK == yes ]]; then
 			display_alert "You are running on an unsupported system" "${HOSTRELEASE:-(unknown)}" "wrn"
 			display_alert "Do not report any errors, warnings or other issues encountered beyond this point" "" "wrn"
@@ -1665,25 +1659,8 @@ function webseed ()
 {
 	# list of mirrors that host our files
 	unset text
-	# Hardcoded to EU mirrors since
 	local CCODE=$(curl -s redirect.armbian.com/geoip | jq '.continent.code' -r)
 	WEBSEED=($(curl -s https://redirect.armbian.com/mirrors | jq -r '.'${CCODE}' | .[] | values'))
-	# aria2 simply split chunks based on sources count not depending on download speed
-	# when selecting china mirrors, use only China mirror, others are very slow there
-	if [[ $DOWNLOAD_MIRROR == china ]]; then
-		WEBSEED=(
-		https://mirrors.tuna.tsinghua.edu.cn/armbian-releases/
-		)
-	elif [[ $DOWNLOAD_MIRROR == bfsu ]]; then
-		WEBSEED=(
-		https://mirrors.bfsu.edu.cn/armbian-releases/
-		)
-	fi
-	if [[ ${filename} == *ky* ]] || [[ ${filename} == *arm-gnu-toolchain* ]]; then
-		WEBSEED=(
-		http://www.iplaystore.cn/upload/
-		)
-	fi
 	for toolchain in ${WEBSEED[@]}; do
 		text="${text} ${toolchain}${1}"
 	done
@@ -1702,40 +1679,17 @@ download_and_verify()
 	local localdir=$SRC/toolchains
 	local dirname=${filename//.tar.xz}
 
-        if [[ $DOWNLOAD_MIRROR == china ]]; then
-			local server="https://mirrors.tuna.tsinghua.edu.cn/armbian-releases/"
-		elif [[ $DOWNLOAD_MIRROR == bfsu ]]; then
-			local server="https://mirrors.bfsu.edu.cn/armbian-releases/"
-		else
-			local server=${ARMBIAN_MIRROR}
-        fi
-
-	if [[ ${filename} == *ky* ]] || [[ ${filename} == *arm-gnu-toolchain* ]]; then
-		server="http://www.iplaystore.cn/upload/"
-	fi
+	local server=${ARMBIAN_MIRROR}
 
 	if [[ -f ${localdir}/${dirname}/.download-complete ]]; then
 		return
 	fi
 
-	# switch to china mirror if US timeouts
+	# retry once on timeout
 	timeout 10 curl --head --fail --silent ${server}${remotedir}/${filename} 2>&1 >/dev/null
 	if [[ $? -ne 7 && $? -ne 22 && $? -ne 0 ]]; then
 		display_alert "Timeout from $server" "retrying" "info"
-		server="https://mirrors.tuna.tsinghua.edu.cn/armbian-releases/"
-		if [[ ${filename} == *ky* ]] || [[ ${filename} == *arm-gnu-toolchain* ]]; then
-			server="http://www.iplaystore.cn/upload/"
-		fi
-
-		# switch to another china mirror if tuna timeouts
 		timeout 10 curl --head --fail --silent ${server}${remotedir}/${filename} 2>&1 >/dev/null
-		if [[ $? -ne 7 && $? -ne 22 && $? -ne 0 ]]; then
-			display_alert "Timeout from $server" "retrying" "info"
-			server="https://mirrors.bfsu.edu.cn/armbian-releases/"
-			if [[ ${filename} == *ky* ]] || [[ ${filename} == *arm-gnu-toolchain* ]]; then
-				server="http://www.iplaystore.cn/upload/"
-			fi
-		fi
 	fi
 
 	# check if file exists on remote server before running aria2 downloader
@@ -1907,14 +1861,7 @@ show_checklist_variables ()
 	done
 }
 
-get_orangepi_url()
-{
-	if [[ ${GITEE_SERVER} == yes ]]; then
-		echo "https://gitee.com/orangepi-xunlong"
-	else
-		echo "https://github.com/orangepi-xunlong"
-	fi
-}
+	echo "https://github.com/orangepi-xunlong"
 
 install_wiringop()
 {
@@ -1962,16 +1909,12 @@ install_docker() {
 		buster|bullseye|bookworm)
 		distributor_id="debian"
 		;;
-		xenial|bionic|focal|jammy|noble)
+		xenial|bionic|focal|jammy|noble|plucky)
 		distributor_id="ubuntu"
 		;;
 	esac
 
-	#if [[ ${SELECTED_CONFIGURATION} == desktop ]]; then
-	#	mirror_url=https://repo.huaweicloud.com
-	#else
-		mirror_url=https://mirrors.aliyun.com
-	#fi
+	mirror_url=https://download.docker.com
 
 	chroot "${SDCARD}" /bin/bash -c "curl -fsSL ${mirror_url}/docker-ce/linux/${distributor_id}/gpg | apt-key add -"
 	echo "deb [arch=${ARCH}] ${mirror_url}/docker-ce/linux/${distributor_id} ${RELEASE} stable" > "${SDCARD}"/etc/apt/sources.list.d/docker.list

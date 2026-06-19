@@ -44,7 +44,7 @@ fi
 
 [[ -z $REVISION ]] && REVISION="3.0.8"
 
-[[ $DOWNLOAD_MIRROR == "china" ]] && NTP_SERVER="cn.pool.ntp.org"
+[[ -z $NTP_SERVER ]] && NTP_SERVER="pool.ntp.org"
 
 if [[ $BUILD_ALL != "yes" ]]; then
 	# override stty size
@@ -460,22 +460,12 @@ if [[ ${IGNORE_UPDATES} != yes ]]; then
 
 	if [[ $BOARDFAMILY == "cix" ]]; then
 
-		if [[ ${GITEE_SERVER} == yes ]]; then
-			fetch_from_repo "https://gitee.com/orangepi-xunlong/component_cix-$BRANCH.git" "${EXTER}/cache/sources/component_cix-$BRANCH" "branch:main"
+		fetch_from_repo "https://github.com/orangepi-xunlong/component_cix-$BRANCH.git" "${EXTER}/cache/sources/component_cix-$BRANCH" "branch:main"
 
-			if [[ ! -f "${EXTER}/cache/sources/component_cix-$BRANCH/debs/cix-npu-onnxruntime_1.1.0_arm64.deb" ]]; then
-				display_alert "Downloading deb" "cix-npu-onnxruntime" "info"
-				wget -c -t 5 -P "${EXTER}/cache/sources/component_cix-$BRANCH/debs/" \
-				http://www.iplaystore.cn/upload/debs/cix-npu-onnxruntime_1.1.0_arm64.deb
-			fi
-		else
-			fetch_from_repo "https://github.com/orangepi-xunlong/component_cix-$BRANCH.git" "${EXTER}/cache/sources/component_cix-$BRANCH" "branch:main"
-
-			if [[ ! -f "${EXTER}/cache/sources/component_cix-$BRANCH/debs/cix-npu-onnxruntime_1.1.0_arm64.deb" ]]; then
-				display_alert "Downloading deb" "cix-npu-onnxruntime" "info"
-				wget -c -t 5 -P "${EXTER}/cache/sources/component_cix-$BRANCH/debs/" \
-				https://github.com/orangepi-xunlong/component_cix-${BRANCH}/releases/download/v1.1.0/cix-npu-onnxruntime_1.1.0_arm64.deb
-			fi
+		if [[ ! -f "${EXTER}/cache/sources/component_cix-$BRANCH/debs/cix-npu-onnxruntime_1.1.0_arm64.deb" ]]; then
+			display_alert "Downloading deb" "cix-npu-onnxruntime" "info"
+			wget -c -t 5 -P "${EXTER}/cache/sources/component_cix-$BRANCH/debs/" \
+			https://github.com/orangepi-xunlong/component_cix-${BRANCH}/releases/download/v1.1.0/cix-npu-onnxruntime_1.1.0_arm64.deb
 		fi
 
 	fi
@@ -532,11 +522,7 @@ if [[ ${IGNORE_UPDATES} != yes ]]; then
 	fi
 
 	if [[ ${BOARDFAMILY} == "sun60iw2" && $RELEASE =~ bullseye ]]; then
-		if [[ ${GITEE_SERVER} == yes ]]; then
-		[[ ${BUILD_OPT} == image ]] && fetch_from_repo "https://gitee.com/orangepi-xunlong/sun60iw2_packages.git" "${EXTER}/cache/sources/sun60iw2_packages" "branch:sun60iw2_packages"
-		else
 		[[ ${BUILD_OPT} == image ]] && fetch_from_repo "https://github.com/orangepi-xunlong/rk-rootfs-build.git" "${EXTER}/cache/sources/sun60iw2_packages" "branch:sun60iw2_packages"
-		fi
 	fi
 
 	if [[ ${BOARD} =~ orangepi3|orangepi3-lts && $RELEASE =~ bullseye && $BRANCH == current ]]; then
