@@ -32,7 +32,7 @@ sudo apt install -y git binfmt-support qemu-user-static
 
 2. Clone and run
 ```bash
-git clone https://github.com/orangepi-xunlong/orangepi-build.git
+git clone https://github.com/11450113-collab/orangepi-build.git
 cd orangepi-build
 ```
 
