@@ -183,41 +183,36 @@ BUILD_PARALLEL="2"
 def apply_uboot_gcc11_patch():
     patch_dir = Path("userpatches/u-boot/u-boot-sunxi")
     patch_dir.mkdir(parents=True, exist_ok=True)
-    patch_file = patch_dir / "0001-fix-gcc11-attribute-conflict.patch"
 
-    if patch_file.exists():
-        print("  [ SKIP ] u-boot gcc11 patch already applied")
-        return
+    # Step 1: 直接用 sed 修改 u-boot Makefile-build（比 patch 可靠）
+    uboot_makefile = Path("u-boot/scripts/Makefile-build")
+    if uboot_makefile.exists():
+        content = uboot_makefile.read_text()
+        if "-Wno-error=attributes" not in content:
+            content = content.replace(
+                "KBUILD_CFLAGS += -Wall -Werror",
+                "KBUILD_CFLAGS += -Wall -Wno-error=attributes"
+            )
+            uboot_makefile.write_text(content)
+            print("  [ PATCH ] Applied gcc11 fix to u-boot/scripts/Makefile-build")
+        else:
+            print("  [ SKIP ] gcc11 fix already in u-boot Makefile-build")
+    else:
+        print("  [ WARN ] u-boot/scripts/Makefile-build not found yet, will try again after checkout")
 
-    patch_content = """From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
-From: Colab Builder <builder@colab>
-Date: Sun, 21 Jun 2026 00:00:00 +0000
-Subject: [PATCH] u-boot: suppress gcc11 attribute conflict warning
-
-The current u-boot v2018.07 with GCC 11+ triggers:
-  error: ignoring attribute 'noreturn' because it conflicts with attribute 'const'
-under -Werror. Disable treating this specific warning as error for u-boot builds.
-
----
- scripts/Makefile.build |    2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
---- a/scripts/Makefile.build
-+++ b/scripts/Makefile.build
-@@ -23,7 +23,7 @@
- # in %.o, %.lst, %.depend, %.sym, %.cache, and %.i) by suffix rules.
- #
- 
--KBUILD_CFLAGS += -Wall -Werror
-+KBUILD_CFLAGS += -Wall -Wno-error=attributes
- KBUILD_CPPFLAGS += -Wall -Werror
- KBUILD_CPPFLAGS += $(call cc-option,-Werror=implicit-function-declaration,)
- endif
-"""
-    patch_file.write_text(patch_content)
-    print(f"  [ PATCH ] Applying u-boot gcc11 attribute fix...")
-    result = run("git apply userpatches/u-boot/u-boot-sunxi/0001-fix-gcc11-attribute-conflict.patch", check=False)
-    print("  [ DONE ] patch applied")
+    # Step 2: 同時修改 scripts/compilation.sh（持久化修復）
+    comp_sh = Path("scripts/compilation.sh")
+    if comp_sh.exists():
+        content = comp_sh.read_text()
+        if 'KBUILD_CFLAGS="-Wno-error=attributes"' not in content:
+            content = content.replace(
+                "eval CCACHE_BASEDIR=\"$(pwd)\" env PATH=\"${toolchain}:${toolchain2}:${PATH}\" \\\n\t\t'make",
+                "eval CCACHE_BASEDIR=\"$(pwd)\" env PATH=\"${toolchain}:${toolchain2}:${PATH}\" \\\n\t\tKBUILD_CFLAGS=\"-Wno-error=attributes\" \\\n\t\t'make"
+            )
+            comp_sh.write_text(content)
+            print("  [ PATCH ] Applied gcc11 fix to scripts/compilation.sh")
+        else:
+            print("  [ SKIP ] gcc11 fix already in compilation.sh")
 
 
 def run_build(board, build_opt):

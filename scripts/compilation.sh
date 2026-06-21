@@ -238,6 +238,7 @@ compile_uboot()
 
 		echo -e "\n\t== u-boot make $target_make ==\n" >> "${DEST}"/${LOG_SUBPATH}/compilation.log
 		eval CCACHE_BASEDIR="$(pwd)" env PATH="${toolchain}:${toolchain2}:${PATH}" \
+			KBUILD_CFLAGS="-Wno-error=attributes" \
 			'make $target_make $CTHREADS \
 			"${cross_compile}"' 2>>"${DEST}"/${LOG_SUBPATH}/compilation.log \
 			${PROGRESS_LOG_TO_FILE:+' | tee -a "${DEST}"/${LOG_SUBPATH}/compilation.log'} \
