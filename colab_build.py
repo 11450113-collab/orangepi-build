@@ -180,6 +180,46 @@ BUILD_PARALLEL="2"
     print("[ DONE ] 設定完成。")
 
 
+def apply_uboot_gcc11_patch():
+    patch_dir = Path("userpatches/u-boot/u-boot-sunxi")
+    patch_dir.mkdir(parents=True, exist_ok=True)
+    patch_file = patch_dir / "0001-fix-gcc11-attribute-conflict.patch"
+
+    if patch_file.exists():
+        print("  [ SKIP ] u-boot gcc11 patch already applied")
+        return
+
+    patch_content = """From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Colab Builder <builder@colab>
+Date: Sun, 21 Jun 2026 00:00:00 +0000
+Subject: [PATCH] u-boot: suppress gcc11 attribute conflict warning
+
+The current u-boot v2018.07 with GCC 11+ triggers:
+  error: ignoring attribute 'noreturn' because it conflicts with attribute 'const'
+under -Werror. Disable treating this specific warning as error for u-boot builds.
+
+---
+ scripts/Makefile.build |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/scripts/Makefile.build
++++ b/scripts/Makefile.build
+@@ -23,7 +23,7 @@
+ # in %.o, %.lst, %.depend, %.sym, %.cache, and %.i) by suffix rules.
+ #
+ 
+-KBUILD_CFLAGS += -Wall -Werror
++KBUILD_CFLAGS += -Wall -Wno-error=attributes
+ KBUILD_CPPFLAGS += -Wall -Werror
+ KBUILD_CPPFLAGS += $(call cc-option,-Werror=implicit-function-declaration,)
+ endif
+"""
+    patch_file.write_text(patch_content)
+    print(f"  [ PATCH ] Applying u-boot gcc11 attribute fix...")
+    result = run("git apply userpatches/u-boot/u-boot-sunxi/0001-fix-gcc11-attribute-conflict.patch", check=False)
+    print("  [ DONE ] patch applied")
+
+
 def run_build(board, build_opt):
     print(f"\n[ 4/5 ] 開始編譯 {board} ({build_opt}) ...")
     print("  這將花費較長時間，請耐心等待。")
@@ -290,6 +330,7 @@ def main():
 
     clone_repo()
     gen_config(args.board, args.release, args.branch, args.build_opt, args.desktop)
+    apply_uboot_gcc11_patch()
 
     image = run_build(args.board, args.build_opt)
     download_result(image)
